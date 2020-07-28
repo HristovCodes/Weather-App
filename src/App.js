@@ -1,12 +1,20 @@
 import React from "react";
 import "./reset.css";
 import "./Main.scss";
+import { findRenderedDOMComponentWithTag } from "react-dom/test-utils";
 
-/*
-api keys
-weather: 10c5fbc8f53a296d3b3b5286da23dc96
-geocode: COlR5onLXsJ6oE1BvpkdrXcuIniiF-eV-3Btzzx49yQ
-*/
+const imgs = {
+  clouds:
+    "https://images.unsplash.com/photo-1534088568595-a066f410bcda?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=389&q=80",
+  thunderstorm:
+    "https://images.unsplash.com/photo-1564343921985-91ced954364a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+  rain:
+    "https://images.unsplash.com/photo-1501999635878-71cb5379c2d8?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1489&q=80",
+  snow:
+    "https://images.unsplash.com/photo-1477601263568-180e2c6d046e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=750&q=80",
+  clear:
+    "https://images.unsplash.com/photo-1501693763903-1ff86bcf3af9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=752&q=80",
+};
 
 function App() {
   return (
@@ -22,6 +30,7 @@ class Main extends React.Component {
     this.state = {
       temp: "fetchin",
       city: "London",
+      img: "",
     };
     this.handleChange = this.handleChange.bind(this);
     this.getWeather = this.getWeather.bind(this);
@@ -54,7 +63,10 @@ class Main extends React.Component {
         { mode: "cors" }
       );
       const weatherData = await weatherResponse.json();
-      console.log(weatherData);
+      const icon = weatherData.current.weather[0].icon;
+      this.setState({
+        img: "http://openweathermap.org/img/wn/" + icon + "@2x.png",
+      });
       this.setState({ temp: weatherData });
       return weatherData;
     } catch (err) {
@@ -72,7 +84,7 @@ class Main extends React.Component {
           onSearch={this.getWeather}
           onChange={this.handleChange}
         ></Search>
-        <Forecast data={this.state.temp} city={this.state.city}></Forecast>
+        <Forecast data={this.state.temp} img={this.state.img}></Forecast>
       </div>
     );
   }
@@ -102,6 +114,7 @@ class Search extends React.Component {
     );
   }
 }
+
 //Container for image and text (degrees wind so on)
 class Forecast extends React.Component {
   constructor(props) {
@@ -127,11 +140,10 @@ class Forecast extends React.Component {
     }
     return (
       <div className="Main">
-        {this.props.city}
+        {data.timezone}
         <button onClick={this.changeUnit}>{this.state.unit}</button>
-        <Image></Image>
-        <Description desc={desc}></Description>
-        <Details unit={this.state.unit} data={data}></Details>
+        <Image desc={desc} img={this.props.img}></Image>
+        <Details unit={this.state.unit} data={data} desc={desc}></Details>
       </div>
     );
   }
@@ -140,14 +152,11 @@ class Forecast extends React.Component {
 //Image pulled from giphy using the description of the weather
 class Image extends React.Component {
   render() {
-    return <div className="Main"></div>;
-  }
-}
-
-//Description of weather (rainy, sunny so on)
-class Description extends React.Component {
-  render() {
-    return <div className="Main">{this.props.desc}</div>;
+    return (
+      <div className="Main">
+        <img src={this.props.img} alt={this.props.desc}></img>
+      </div>
+    );
   }
 }
 
@@ -163,10 +172,11 @@ class Details extends React.Component {
           : this.props.data.current.temp;
       return (
         <div className="Main">
-          <p>Current temperature is: {temp}</p>
-          <p>Current humidity is: {this.props.data.current.humidity} %</p>
-          <p>Current wind speed is: {this.props.data.current.wind_speed} mph</p>
-          <p>Current wind direction is: {this.props.data.current.wind_deg}°</p>
+          <p>Weather Description: {this.props.desc}</p>
+          <p>Temperature: {temp}</p>
+          <p>Humidity: {this.props.data.current.humidity} %</p>
+          <p>Wind Speed: {this.props.data.current.wind_speed} mph</p>
+          <p>Wind Direction: {this.props.data.current.wind_deg}°</p>
         </div>
       );
     }
