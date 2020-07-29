@@ -1,34 +1,17 @@
 import React from "react";
-import "./reset.css";
-import "./Main.scss";
-import { findRenderedDOMComponentWithTag } from "react-dom/test-utils";
-
-const imgs = {
-  clouds:
-    "https://images.unsplash.com/photo-1534088568595-a066f410bcda?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=389&q=80",
-  thunderstorm:
-    "https://images.unsplash.com/photo-1564343921985-91ced954364a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-  rain:
-    "https://images.unsplash.com/photo-1501999635878-71cb5379c2d8?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1489&q=80",
-  snow:
-    "https://images.unsplash.com/photo-1477601263568-180e2c6d046e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=750&q=80",
-  clear:
-    "https://images.unsplash.com/photo-1501693763903-1ff86bcf3af9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=752&q=80",
-};
+import "./styles/reset.css";
+import "./styles/Main.scss";
+import "./styles/Loading.scss";
 
 function App() {
-  return (
-    <div className="App">
-      <Main />
-    </div>
-  );
+  return <Main />;
 }
 
 class Main extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      temp: "fetchin",
+      weather: "",
       city: "London",
       img: "",
     };
@@ -58,7 +41,7 @@ class Main extends React.Component {
           coordsData.items[0].position.lat +
           "&lon=" +
           coordsData.items[0].position.lng +
-          "&units=imperial&exclude=minutely&appid=" +
+          "&units=imperial&exclude=minutely,daily,hourly&appid=" +
           openWeatherKey,
         { mode: "cors" }
       );
@@ -66,8 +49,8 @@ class Main extends React.Component {
       const icon = weatherData.current.weather[0].icon;
       this.setState({
         img: "http://openweathermap.org/img/wn/" + icon + "@2x.png",
+        weather: weatherData,
       });
-      this.setState({ temp: weatherData });
       return weatherData;
     } catch (err) {
       console.log(err);
@@ -75,7 +58,7 @@ class Main extends React.Component {
   }
 
   render() {
-    if (this.state.temp === "fetchin") {
+    if (this.state.weather === "") {
       this.getWeather();
     }
     return (
@@ -84,7 +67,7 @@ class Main extends React.Component {
           onSearch={this.getWeather}
           onChange={this.handleChange}
         ></Search>
-        <Forecast data={this.state.temp} img={this.state.img}></Forecast>
+        <Forecast data={this.state.weather} img={this.state.img}></Forecast>
       </div>
     );
   }
@@ -103,13 +86,16 @@ class Search extends React.Component {
 
   render() {
     return (
-      <div className="Main">
+      <div className="Search">
         <input
+          className="Input"
           onChange={this.handleChange}
           placeholder="City name"
           type="text"
         ></input>
-        <button onClick={this.props.onSearch}>Search</button>
+        <button className="Button" onClick={this.props.onSearch}>
+          Search
+        </button>
       </div>
     );
   }
@@ -127,21 +113,27 @@ class Forecast extends React.Component {
 
   changeUnit() {
     if (this.state.unit === "c") {
+      document.getElementById("Switch").classList.replace("c", "f");
       this.setState({ unit: "f" });
-    } else this.setState({ unit: "c" });
+    } else {
+      this.setState({ unit: "c" });
+      document.getElementById("Switch").classList.replace("f", "c");
+    }
   }
 
   render() {
     let data = "";
     let desc = "";
-    if (this.props.data !== "fetchin") {
+    if (this.props.data !== "") {
       data = this.props.data;
       desc = this.props.data.current.weather[0].description;
     }
     return (
-      <div className="Main">
-        {data.timezone}
-        <button onClick={this.changeUnit}>{this.state.unit}</button>
+      <div className="Forecast">
+        <p className="Timezone">{data.timezone}</p>
+        <button className="Switch c" id="Switch" onClick={this.changeUnit}>
+          {this.state.unit}
+        </button>
         <Image desc={desc} img={this.props.img}></Image>
         <Details unit={this.state.unit} data={data} desc={desc}></Details>
       </div>
@@ -153,7 +145,7 @@ class Forecast extends React.Component {
 class Image extends React.Component {
   render() {
     return (
-      <div className="Main">
+      <div className="Image">
         <img src={this.props.img} alt={this.props.desc}></img>
       </div>
     );
@@ -164,19 +156,33 @@ class Image extends React.Component {
 class Details extends React.Component {
   render() {
     if (this.props.data === "") {
-      return <div className="Main">Fetchin</div>;
+      return (
+        <div className="Description">
+          <div className="Loading">Loading&#8230;</div>
+        </div>
+      );
     } else {
       const temp =
         this.props.unit === "c"
           ? toCelsius(this.props.data.current.temp)
           : this.props.data.current.temp;
       return (
-        <div className="Main">
-          <p>Weather Description: {this.props.desc}</p>
-          <p>Temperature: {temp}</p>
-          <p>Humidity: {this.props.data.current.humidity} %</p>
-          <p>Wind Speed: {this.props.data.current.wind_speed} mph</p>
-          <p>Wind Direction: {this.props.data.current.wind_deg}°</p>
+        <div className="Description">
+          <p>
+            <span>Weather Description:</span> {this.props.desc}
+          </p>
+          <p>
+            <span>Temperature:</span> {temp + " " + this.props.unit}
+          </p>
+          <p>
+            <span>Humidity:</span> {this.props.data.current.humidity} %
+          </p>
+          <p>
+            <span>Wind Speed:</span> {this.props.data.current.wind_speed} mph
+          </p>
+          <p>
+            <span>Wind Direction:</span> {this.props.data.current.wind_deg}°
+          </p>
         </div>
       );
     }
