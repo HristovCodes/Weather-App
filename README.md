@@ -1,12 +1,18 @@
-# Weather-App
+## What is this app all about?
+The app is a simple weather app that shows todays forecast.
 
-Weather app using Open Weather Map, Giphy and Here API
+## Features
+- Real time weather update
+- Search by city
+- Support for both fahrenheit and celcius
 
-To Do:
+## Api's used
+- Open Weather Map: Used to get weather data
+- Here API: Used to geocoding
 
+# To Do:
 
-Done:
-
+# Done:
 - Create a simple layout for the page.
 - Retrieve location from a text input.
 - Translate the location to lat and lon via Here API.
